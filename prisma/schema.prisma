@@ -1,0 +1,173 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum EquipmentStatus {
+  AVAILABLE
+  RENTED
+  MAINTENANCE
+  DISCONTINUED
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  IN_USE
+  RETURNED
+  COMPLETED
+}
+
+enum PaymentMethod {
+  CARD
+  BANK_TRANSFER
+  VIRTUAL_ACCOUNT
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  PARTIALLY_REFUNDED
+  REFUNDED
+  FAILED
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  phone        String?
+  passwordHash String
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  reservations Reservation[]
+  payments     Payment[]
+  reviews      Review[]
+
+  @@map("users")
+}
+
+model Category {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  slug        String      @unique
+  description String?
+  imageUrl    String?
+  sortOrder   Int         @default(0)
+  createdAt   DateTime    @default(now())
+
+  equipment Equipment[]
+
+  @@map("categories")
+}
+
+model Equipment {
+  id          String          @id @default(cuid())
+  name        String
+  description String?
+  dailyPrice  Int
+  deposit     Int             @default(0)
+  stock       Int             @default(1)
+  status      EquipmentStatus @default(AVAILABLE)
+  images      String[]
+  categoryId  String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  category         Category          @relation(fields: [categoryId], references: [id])
+  reservationItems ReservationItem[]
+  reviews          Review[]
+
+  @@map("equipment")
+}
+
+model Reservation {
+  id           String            @id @default(cuid())
+  renterName   String
+  phone        String
+  teamMembers  String[]
+  userId       String?
+  startDate    DateTime
+  endDate      DateTime
+  totalPrice   Int
+  status       ReservationStatus @default(PENDING)
+  notes        String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  user    User?             @relation(fields: [userId], references: [id])
+  items   ReservationItem[]
+  payment Payment?
+  reviews Review[]
+
+  @@map("reservations")
+}
+
+model ReservationItem {
+  id            String @id @default(cuid())
+  reservationId String
+  equipmentId   String
+  quantity      Int    @default(1)
+  dailyPrice    Int
+  days          Int
+  subtotal      Int
+
+  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  equipment   Equipment   @relation(fields: [equipmentId], references: [id])
+
+  @@map("reservation_items")
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  reservationId String        @unique
+  userId        String
+  amount        Int
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  transactionId String?       @unique
+  refundAmount  Int           @default(0)
+  paidAt        DateTime?
+  refundedAt    DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  reservation Reservation @relation(fields: [reservationId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
+
+  @@map("payments")
+}
+
+model Review {
+  id            String   @id @default(cuid())
+  userId        String
+  equipmentId   String
+  reservationId String
+  rating        Int
+  content       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id])
+  equipment   Equipment   @relation(fields: [equipmentId], references: [id])
+  reservation Reservation @relation(fields: [reservationId], references: [id])
+
+  @@unique([reservationId, equipmentId])
+  @@map("reviews")
+}
