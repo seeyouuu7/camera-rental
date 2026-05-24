@@ -1,8 +1,11 @@
 import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
+import type { Equipment, Category } from "@/app/generated/prisma/client";
 import EquipmentCard from "@/app/components/EquipmentCard";
 import CategoryFilter from "@/app/components/CategoryFilter";
 import SessionBanner from "@/app/components/SessionBanner";
+
+type EquipmentWithCategory = Equipment & { category: Category };
 
 type SearchParams = Promise<{ category?: string; start?: string; end?: string }>;
 
@@ -68,7 +71,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {equipment.map((item) => (
+            {(equipment as EquipmentWithCategory[]).map((item) => (
               <EquipmentCard
                 key={item.id}
                 item={item}

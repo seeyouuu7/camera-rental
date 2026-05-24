@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/prisma";
+import type { Equipment, Category } from "@/app/generated/prisma/client";
 import EquipmentManager from "./EquipmentManager";
+
+type EquipmentWithCategory = Equipment & { category: { id: string; name: string } };
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +23,7 @@ export default async function AdminEquipmentPage() {
           <p className="mt-1 text-sm text-zinc-400">총 {equipment.length}개</p>
         </div>
       </div>
-      <EquipmentManager equipment={equipment} categories={categories} />
+      <EquipmentManager equipment={equipment as EquipmentWithCategory[]} categories={categories as Category[]} />
     </div>
   );
 }

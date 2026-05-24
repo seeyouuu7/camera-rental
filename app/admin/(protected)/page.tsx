@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/prisma";
+import type { Reservation, ReservationItem } from "@/app/generated/prisma/client";
 import ReservationTable from "./ReservationTable";
+
+type ReservationWithItems = Reservation & {
+  items: (ReservationItem & { equipment: { name: string; category: { name: string } } })[];
+};
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +26,7 @@ export default async function AdminPage() {
           <p className="mt-1 text-sm text-zinc-400">총 {reservations.length}건</p>
         </div>
       </div>
-      <ReservationTable reservations={reservations} />
+      <ReservationTable reservations={reservations as ReservationWithItems[]} />
     </div>
   );
 }

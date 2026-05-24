@@ -47,7 +47,8 @@ export async function POST(req: NextRequest) {
           },
         },
       });
-      const available = equipment.stock - (booked._sum.quantity ?? 0);
+      const bookedQty = (booked._sum as { quantity?: number | null }).quantity ?? 0;
+      const available = equipment.stock - bookedQty;
       if (available < item.quantity) {
         return NextResponse.json(
           { error: `재고가 부족합니다. (가용 수량: ${available})` },
